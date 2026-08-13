@@ -1,0 +1,8 @@
+TASK: 005 - Fastify Server Core & World Management
+STATUS: IN_PROGRESS
+DESCRIPTION: Node.js + Fastify WebSocket server architecture, 20 TPS tick loop, spatial partitioning, chunk streaming.
+DEPENDENCIES: task_001.txt, task_002.txt
+TODO:
+- [x] Fastify WebSocket handling with high-throughput pooling
+- [x] Spatial Hash Grid for Interest Management
+- [x] Tick Loop, Physics Validation & Server Authority

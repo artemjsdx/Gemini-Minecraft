@@ -1,0 +1,8 @@
+TASK: 001 - System Architecture & Data Flow Overview
+STATUS: IN_PROGRESS
+DESCRIPTION: Architectural blueprint of the React + Three.js client, Worker Threads, and Fastify server ecosystem.
+DEPENDENCIES: None
+TODO:
+- [x] Client-Server Topology
+- [x] Threading & Worker Separation (Main Thread, Render Thread, Meshing Workers, Audio/Network Workers)
+- [x] State Synchronization Lifecycle

@@ -1,0 +1,39 @@
+================================================================================
+VOXELCRAFT RPG PROJECT - GLOBAL CONTEXT (context.txt)
+Last Updated: 2026-08-13
+================================================================================
+
+1. PROJECT SUMMARY & IDENTITY
+- Name: VoxelCraft RPG
+- Package / ApplicationId: com.aistudio.voxelcraft.zkptwq
+- Target Platform: Android 14+ / Jetpack Compose & High-Performance WebGL2 Engine
+- Visual Architecture:
+  * 3D Voxel Engine (Three.js WebGL2 + Cascaded Shadow Maps + Post-Processing SSAO)
+  * Multi-Chunk SVO procedural terrain generation (Hills, Oceans, Ores, Trees, Foliage)
+  * Dynamic day/night cycle, sun, moon, and torch lighting
+  * Mob AI Engine (Behavior Trees + 3D Voxel Pathfinding for Zombies and Sheep)
+  * Inventory System (27 inventory slots + 9 hotbar slots + equipped items)
+  * 3x3 Voxel Crafting Forge (Shaped/Shapeless recipes + quick-crafting)
+  * 6-Branch RPG Talent Tree (Mining, Combat, Agility, Building, Alchemy, Sorcery) with active abilities (Vein Miner, Double Jump, Fireball, Critical Strike)
+  * Synthesized Web Audio Sound Engine (block breaking, placing, sword slash, spell cast, level-up)
+  * Native Jetpack Compose Host with Material 3 design, hardware-accelerated WebView, and haptic feedback.
+
+2. COMPLETED TASKS & ARCHITECTURE FILES
+- task_001.txt: System Architecture Plan (01_SYSTEM_ARCHITECTURE.md) [COMPLETED]
+- task_002.txt: Networking & Binary Protocol Plan (02_NETWORKING_BINARY_PROTOCOL.md) [COMPLETED]
+- task_003.txt: Voxel Engine & Octree Meshing Plan (03_CHUNK_OCTREE_VOXEL_ENGINE.md) [COMPLETED]
+- task_004.txt: Rendering Pipeline & PBR Shaders Plan (04_RENDERING_PIPELINE_SHADERS.md) [COMPLETED]
+- task_005.txt: Fastify Server Architecture Plan (05_FASTIFY_SERVER_CORE.md) [COMPLETED]
+- task_006.txt: Gameplay Systems & RPG Progression Plan (06_GAMEPLAY_SYSTEMS_RPG.md) [COMPLETED]
+- task_007.txt: Client SDK & Three.js Guide Plan (07_API_DOCUMENTATION_THREEJS_CLIENT.md) [COMPLETED]
+- task_008.txt: Zip Packaging (minecraft_web_architecture_plan.zip) [COMPLETED]
+- task_009.txt: Full Autonomous Implementation & Android Integration [COMPLETED]
+- task_010.txt: Ashmem Memory Management & WebView Lifecycle Fix [COMPLETED]
+- task_011.txt: Fix Controls, 16x16 Pixel Textures, AABB Collision Physics, Auto-Step & Chunk Streaming [COMPLETED]
+- task_012.txt: Replace All Emojis with Clean SVGs & Real-Time Coordinates HUD [COMPLETED]
+- task_013.txt: Landscape Screen Orientation, Freeze Fix & Minecraft D-Pad Controls [COMPLETED]
+
+3. BUILD & COMPILATION STATUS
+- compile_applet: PASSED (Zero errors)
+- Unit & Screenshot test assertions synchronized with "VoxelCraft"
+================================================================================

@@ -1,0 +1,8 @@
+TASK: 003 - Voxel Engine, Octree & Instancing Optimization
+STATUS: IN_PROGRESS
+DESCRIPTION: Chunk subdivision, Sparse Voxel Octree (SVO), Greedy Meshing, and WebGL InstancedBufferGeometry.
+DEPENDENCIES: task_001.txt
+TODO:
+- [x] 32x32x32 Sub-chunk & Octree Hierarchies
+- [x] Greedy Meshing on Web Workers
+- [x] Instanced Rendering for non-opaque/foliage/particles

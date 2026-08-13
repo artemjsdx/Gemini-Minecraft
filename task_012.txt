@@ -1,0 +1,10 @@
+TASK: 012 - Replace All Emojis with Clean SVGs & Real-Time Coordinates HUD
+STATUS: COMPLETED
+DESCRIPTION:
+1. Replaced every emoji across top navigation bar, quick action touch buttons, modals, close triggers, and crafting recipes with high-contrast, scalable Vector SVGs (Backpack, Pickaxe, Cube/Block, Flame, Settings Gear, Lightning, Arrow Jump, Close X, Recipe Icons).
+2. Added a Real-Time HUD Position & Compass Locator showing exact XYZ world coordinates, active Chunk coordinates [CX, CZ], Compass Heading (e.g. North 0°, East 90°), and active Biome (Plains/Highlands/Ocean).
+DEPENDENCIES: task_011.txt
+TODO:
+- [x] Replace all emojis with crisp inline SVG vector icons
+- [x] Add HUD Location Widget with XYZ, Chunk, Biome, and Compass Heading
+- [x] Test and compile

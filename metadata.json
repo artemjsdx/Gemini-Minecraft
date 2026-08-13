@@ -1,0 +1,6 @@
+{
+  "name": "VoxelCraft RPG",
+  "description": "Next-Gen 3D Voxel RPG Sandbox Engine with WebGL Deferred Rendering, Octree Chunk Optimization, PBR Shaders, Inventory, Crafting, Mobs AI and 6-Branch RPG Talent Trees",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

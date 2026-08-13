@@ -1,0 +1,8 @@
+TASK: 002 - Binary Network Protocol & World State Sync
+STATUS: IN_PROGRESS
+DESCRIPTION: Specification of low-overhead binary packets, bitmasks, delta chunk sync, and client prediction.
+DEPENDENCIES: task_001.txt
+TODO:
+- [x] Binary Packet Format & Opcode Registry
+- [x] Chunk Delta Serialization & Compression (RLE + LZ4)
+- [x] Entity State Interpolation & Client-Side Reconciliation

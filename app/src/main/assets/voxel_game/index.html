@@ -1,0 +1,1955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Gemini Mine</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      margin: 0;
+      padding: 0;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #0b0f19;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Minecraft", monospace, sans-serif;
+      touch-action: none;
+    }
+
+    /* MAIN MENU / WORLD CREATOR STYLES */
+    #menu-container {
+      position: absolute;
+      inset: 0;
+      z-index: 1000;
+      background: radial-gradient(circle at center, #1e293b 0%, #090d16 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      color: #fff;
+    }
+    .game-logo {
+      font-size: 38px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #ffd60a;
+      text-shadow: 0 4px 0 #b45309, 0 8px 16px rgba(0,0,0,0.8);
+      margin-bottom: 2px;
+      text-align: center;
+    }
+    .game-sub {
+      font-size: 13px;
+      color: #38bdf8;
+      font-weight: 700;
+      letter-spacing: 3px;
+      margin-bottom: 20px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+    }
+    .menu-card {
+      width: 100%;
+      max-width: 520px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 2px solid #334155;
+      border-radius: 12px;
+      padding: 16px 20px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.8);
+      backdrop-filter: blur(10px);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .menu-btn {
+      width: 100%;
+      padding: 10px 16px;
+      background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
+      border: 2px solid #60a5fa;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+      transition: transform 0.1s, filter 0.1s;
+    }
+    .menu-btn:active {
+      transform: scale(0.97);
+      filter: brightness(1.2);
+    }
+    .menu-btn.green {
+      background: linear-gradient(180deg, #22c55e 0%, #15803d 100%);
+      border-color: #4ade80;
+    }
+    .menu-btn.dark {
+      background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+      border-color: #64748b;
+    }
+    .menu-input-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .menu-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .menu-input, .menu-select {
+      width: 100%;
+      padding: 8px 12px;
+      background: #0f172a;
+      border: 1px solid #475569;
+      border-radius: 6px;
+      color: #f8fafc;
+      font-size: 13px;
+      outline: none;
+    }
+    .menu-input:focus, .menu-select:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.3);
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    /* IN GAME 3D CANVAS & HUD */
+    #game-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      display: block;
+    }
+    #crosshair {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 20px;
+      height: 20px;
+      pointer-events: none;
+      z-index: 10;
+    }
+    #crosshair::before, #crosshair::after {
+      content: '';
+      position: absolute;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 0 2px rgba(0,0,0,0.8);
+    }
+    #crosshair::before { top: 9px; left: 0; width: 20px; height: 2px; }
+    #crosshair::after { top: 0; left: 9px; width: 2px; height: 20px; }
+
+    #ui-container {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 6px 12px;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      pointer-events: auto;
+    }
+
+    .top-left-panel {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .vitals-col {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .heart-row, .hunger-row {
+      display: flex;
+      gap: 2px;
+      align-items: center;
+    }
+    .vital-icon {
+      width: 13px;
+      height: 13px;
+      fill: #ef4444;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.8));
+    }
+    .hunger-icon {
+      fill: #d97706;
+    }
+
+    .location-card {
+      background: rgba(14, 18, 30, 0.85);
+      border: 1px solid rgba(255, 214, 10, 0.4);
+      border-radius: 6px;
+      padding: 4px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+      color: #fff;
+      font-size: 10px;
+    }
+    .loc-coords {
+      font-weight: 800;
+      color: #ffd60a;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .loc-sub {
+      color: #94a3b8;
+      font-size: 9px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 6px;
+    }
+    .btn-icon {
+      width: 36px;
+      height: 36px;
+      background: rgba(20, 26, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 8px;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+    }
+    .btn-icon:active {
+      transform: scale(0.92);
+      background: rgba(45, 60, 100, 0.95);
+    }
+    .svg-icon {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    /* Hotbar */
+    .hotbar-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: auto;
+      margin-bottom: 2px;
+    }
+    .hotbar {
+      display: flex;
+      gap: 4px;
+      background: rgba(10, 14, 24, 0.92);
+      padding: 4px 6px;
+      border-radius: 8px;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.7);
+    }
+    .hotbar-slot {
+      width: 38px;
+      height: 38px;
+      background: rgba(28, 36, 56, 0.7);
+      border-radius: 5px;
+      border: 2px solid transparent;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      cursor: pointer;
+    }
+    .hotbar-slot.active {
+      border-color: #ffd60a;
+      background: rgba(65, 80, 125, 0.9);
+      box-shadow: 0 0 8px rgba(255, 214, 10, 0.7);
+      transform: translateY(-2px);
+    }
+    .slot-icon {
+      width: 24px;
+      height: 24px;
+      image-rendering: pixelated;
+    }
+    .slot-num {
+      position: absolute;
+      bottom: 0px;
+      right: 2px;
+      font-size: 9px;
+      font-weight: 800;
+      color: #fff;
+      text-shadow: 1px 1px 1px #000;
+    }
+
+    /* TOUCH CONTROLS (MINECRAFT BEDROCK D-PAD & ACTIONS) */
+    #touch-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 15;
+    }
+    #touch-look-zone {
+      position: absolute;
+      top: 0;
+      left: 170px;
+      right: 180px;
+      bottom: 0;
+      pointer-events: auto;
+    }
+
+    .dpad-container {
+      position: absolute;
+      bottom: 12px;
+      left: 14px;
+      width: 140px;
+      height: 140px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 3px;
+      pointer-events: auto;
+    }
+    .dpad-btn {
+      background: rgba(22, 28, 44, 0.82);
+      border: 2px solid rgba(255, 255, 255, 0.28);
+      border-radius: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+      touch-action: none;
+    }
+    .dpad-btn:active, .dpad-btn.pressed {
+      background: rgba(70, 90, 150, 0.95);
+      border-color: #ffd60a;
+      transform: scale(0.93);
+    }
+    .dpad-btn.center-shift {
+      background: rgba(35, 45, 70, 0.9);
+      border-color: rgba(255, 214, 10, 0.5);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .dpad-btn.center-shift.active-shift {
+      background: #ffd60a;
+      color: #000;
+      border-color: #fff;
+    }
+
+    .right-action-cluster {
+      position: absolute;
+      bottom: 12px;
+      right: 14px;
+      display: grid;
+      grid-template-columns: repeat(2, 54px);
+      gap: 10px;
+      pointer-events: auto;
+    }
+    .action-btn {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: rgba(22, 28, 44, 0.85);
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+      touch-action: none;
+    }
+    .action-btn:active, .action-btn.pressed {
+      transform: scale(0.9);
+      border-color: #ffd60a;
+      box-shadow: 0 0 10px rgba(255, 214, 10, 0.8);
+    }
+    .btn-jump-main { background: rgba(0, 122, 255, 0.85); border-color: rgba(255, 255, 255, 0.6); }
+    .btn-mine-act { background: rgba(239, 68, 68, 0.85); }
+    .btn-place-act { background: rgba(34, 197, 94, 0.85); }
+    .btn-eat-act { background: rgba(245, 158, 11, 0.85); }
+
+    /* Modals */
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(3, 5, 10, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 50;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+      pointer-events: auto;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-box {
+      width: 90%;
+      max-width: 480px;
+      max-height: 88vh;
+      background: #111522;
+      border: 2px solid #293452;
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+      color: #fff;
+      box-shadow: 0 16px 36px rgba(0,0,0,0.8);
+    }
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #293452;
+      padding-bottom: 8px;
+      font-weight: 800;
+      font-size: 16px;
+      color: #ffd60a;
+    }
+    .modal-close { cursor: pointer; color: #8e8e93; display: flex; align-items: center; }
+    .inv-matrix {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 4px;
+      background: #090c14;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #1c2438;
+    }
+    .inv-cell {
+      aspect-ratio: 1;
+      background: #192033;
+      border-radius: 5px;
+      border: 1px solid #2a3654;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      position: relative;
+    }
+    .inv-cell:hover { border-color: #ffd60a; background: #263352; }
+
+    .recipe-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: #192133;
+      color: #fff;
+      border: 1px solid #2b3958;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .recipe-btn:active { background: #2a385c; }
+
+    #toast {
+      position: absolute;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 20, 32, 0.95);
+      border: 1px solid #ffd60a;
+      border-radius: 6px;
+      padding: 5px 12px;
+      color: #ffd60a;
+      font-weight: 700;
+      font-size: 11px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+      z-index: 100;
+    }
+    #toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+  <!-- MAIN MENU SCREEN -->
+  <div id="menu-container">
+    <div class="game-logo">GEMINI MINE</div>
+    <div class="game-sub">3D VOXEL SURVIVAL ENGINE</div>
+
+    <!-- Screen 1: Title Options -->
+    <div class="menu-card" id="menu-main-view">
+      <button class="menu-btn green" onclick="openCreateWorldScreen()">Create New World</button>
+      <button class="menu-btn" onclick="startQuickGame()">Play Last World</button>
+      <button class="menu-btn dark" onclick="showSettingsModal()">Settings & Controls</button>
+    </div>
+
+    <!-- Screen 2: World Creator Parameters -->
+    <div class="menu-card" id="menu-create-view" style="display: none;">
+      <div style="font-weight: 800; font-size: 16px; color: #ffd60a; border-bottom: 1px solid #334155; padding-bottom: 6px;">Create World Settings</div>
+      
+      <div class="menu-input-row">
+        <label class="menu-label">World Name</label>
+        <input type="text" id="cfg-world-name" class="menu-input" value="My Gemini World">
+      </div>
+
+      <div class="grid-2">
+        <div class="menu-input-row">
+          <label class="menu-label">World Generator Type</label>
+          <select id="cfg-world-type" class="menu-select">
+            <option value="default" selected>Default (Multi-Biomes)</option>
+            <option value="amplified">Amplified Mountains</option>
+            <option value="desert">Desert Oasis</option>
+            <option value="islands">Endless Islands</option>
+            <option value="flat">Superflat</option>
+          </select>
+        </div>
+
+        <div class="menu-input-row">
+          <label class="menu-label">Game Mode</label>
+          <select id="cfg-game-mode" class="menu-select">
+            <option value="survival" selected>Survival</option>
+            <option value="creative">Creative (Instant Break)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="menu-input-row">
+        <label class="menu-label">Seed (Optional)</label>
+        <input type="text" id="cfg-seed" class="menu-input" placeholder="Leave blank for random seed">
+      </div>
+
+      <div class="grid-2" style="margin-top: 6px;">
+        <button class="menu-btn dark" onclick="backToMainMenu()">Cancel</button>
+        <button class="menu-btn green" onclick="generateAndStartWorld()">Start Creation & Play</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3D WORLD CANVAS -->
+  <canvas id="game-canvas"></canvas>
+  <div id="crosshair"></div>
+  <div id="toast">World Loaded!</div>
+
+  <!-- IN-GAME HUD -->
+  <div id="ui-container" style="display: none;">
+    <div class="top-bar">
+      <div class="top-left-panel">
+        <div class="vitals-col">
+          <!-- 10 Hearts -->
+          <div class="heart-row" id="hearts-container"></div>
+          <!-- 10 Food Drumsticks -->
+          <div class="hunger-row" id="hunger-container"></div>
+        </div>
+
+        <!-- REALTIME POSITION & BIOME HUD -->
+        <div class="location-card">
+          <div class="loc-coords">
+            <svg class="svg-icon" style="width:12px; height:12px; fill:#ffd60a;" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            <span id="coord-display">XYZ: 8.5 / 24.0 / 8.5</span>
+          </div>
+          <div class="loc-sub">
+            <span id="biome-display">Biome: Plains</span>
+            <span id="heading-display">Heading: North (0°)</span>
+            <span id="chunk-display">Chunk: [0, 0]</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <!-- Backpack SVG -->
+        <div class="btn-icon" id="btn-inv" title="Inventory">
+          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>
+        </div>
+        <!-- Crafting SVG -->
+        <div class="btn-icon" id="btn-craft" title="Crafting">
+          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>
+        </div>
+        <!-- Pause / Menu SVG -->
+        <div class="btn-icon" id="btn-pause" onclick="pauseAndExitToMenu()" title="Pause to Menu">
+          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hotbar -->
+    <div class="hotbar-wrap">
+      <div class="hotbar" id="hotbar"></div>
+    </div>
+  </div>
+
+  <!-- Touch Layer with Minecraft Bedrock Style Layout -->
+  <div id="touch-layer" style="display: none;">
+    <!-- Camera Look Swipe Zone -->
+    <div id="touch-look-zone"></div>
+
+    <!-- Classic Minecraft 4-Way D-Pad + Center Shift -->
+    <div class="dpad-container" id="dpad-container">
+      <div></div>
+      <div class="dpad-btn" id="dpad-up" title="Move Forward">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
+      </div>
+      <div></div>
+
+      <div class="dpad-btn" id="dpad-left" title="Move Left">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></svg>
+      </div>
+      <div class="dpad-btn center-shift" id="dpad-shift" title="Shift / Sneak">
+        <span>SHIFT</span>
+      </div>
+      <div class="dpad-btn" id="dpad-right" title="Move Right">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+      </div>
+
+      <div></div>
+      <div class="dpad-btn" id="dpad-down" title="Move Backward">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+      </div>
+      <div></div>
+    </div>
+
+    <!-- Right Side Actions with Minecraft Jump, Hit/Mine, Place, Eat -->
+    <div class="right-action-cluster">
+      <!-- Eat Food / Use Item -->
+      <div class="action-btn btn-eat-act" id="btn-touch-eat" title="Eat Food / Drink">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1 1H2c-.55 0-1-.45-1-1zm15.03-7c0-8-15.03-8-15.03 0h15.03z"/></svg>
+      </div>
+      <!-- Mine / Hit Block -->
+      <div class="action-btn btn-mine-act" id="btn-touch-mine" title="Mine / Attack">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M14.79 10.62L3.5 21.91 2.09 20.5 13.38 9.21l1.41 1.41zm6.92-5.5l-2.12-2.12c-.78-.78-2.05-.78-2.83 0l-1.41 1.41 4.95 4.95 1.41-1.41c.78-.78.78-2.05 0-2.83zM15.5 3.5l1.41 1.41-8.49 8.49-1.41-1.41L15.5 3.5z"/></svg>
+      </div>
+      <!-- Place Block -->
+      <div class="action-btn btn-place-act" id="btn-touch-place" title="Place Block">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18s-.41-.06-.57-.18l-7.9-4.44A.991.991 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18s.41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9zM12 4.15L6.04 7.5 12 10.85l5.96-3.35L12 4.15z"/></svg>
+      </div>
+      <!-- JUMP BUTTON -->
+      <div class="action-btn btn-jump-main" id="btn-touch-jump" title="Jump">
+        <svg class="svg-icon" style="width:24px; height:24px;" viewBox="0 0 24 24"><path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Inventory -->
+  <div class="modal-backdrop" id="modal-inv">
+    <div class="modal-box">
+      <div class="modal-head">
+        <span>Player Inventory</span>
+        <span class="modal-close" onclick="closeModals()">
+          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </span>
+      </div>
+      <div class="inv-matrix" id="inv-matrix"></div>
+    </div>
+  </div>
+
+  <!-- Modal: Crafting -->
+  <div class="modal-backdrop" id="modal-craft">
+    <div class="modal-box">
+      <div class="modal-head">
+        <span>3x3 Crafting Table</span>
+        <span class="modal-close" onclick="closeModals()">
+          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </span>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button class="recipe-btn" onclick="craftItem('planks')">
+          <svg class="svg-icon" style="fill:#d97706;" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg>
+          Wood Log &rarr; 4 Wood Planks
+        </button>
+        <button class="recipe-btn" onclick="craftItem('torch')">
+          <svg class="svg-icon" style="fill:#f59e0b;" viewBox="0 0 24 24"><path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67z"/></svg>
+          Coal + Sticks &rarr; 4 Torches
+        </button>
+        <button class="recipe-btn" onclick="craftItem('bread')">
+          <svg class="svg-icon" style="fill:#eab308;" viewBox="0 0 24 24"><path d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05z"/></svg>
+          3 Wheat &rarr; 1 Loaf of Bread
+        </button>
+        <button class="recipe-btn" onclick="craftItem('bricks')">
+          <svg class="svg-icon" style="fill:#ef4444;" viewBox="0 0 24 24"><path d="M19 4H5c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4h-5V6h5v2zm-7 0H5V6h7v2zm-7 4h5v-2H5v2zm7 0h7v-2h-7v2zm7 4h-5v-2h5v2zm-7 0H5v-2h7v2z"/></svg>
+          4 Stone &rarr; 4 Stone Bricks
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================================
+       1. TEXTURE ATLAS GENERATOR & BLOCK HARDNESS DEFINITIONS
+       ========================================================================= */
+    const ATLAS_SIZE = 256;
+    const TILE_SIZE = 16;
+    const atlasCanvas = document.createElement('canvas');
+    atlasCanvas.width = ATLAS_SIZE;
+    atlasCanvas.height = ATLAS_SIZE;
+    const ctx = atlasCanvas.getContext('2d');
+
+    const BLOCKS = {
+      AIR: 0, GRASS: 1, DIRT: 2, STONE: 3, WOOD: 4, LEAVES: 5, SAND: 6, WATER: 7,
+      GOLD_ORE: 8, IRON_ORE: 9, DIAMOND_ORE: 10, OBSIDIAN: 11, TORCH: 12,
+      BRICK: 13, GLASS: 14, PLANKS: 15, CACTUS: 16, SANDSTONE: 17, COAL_ORE: 18,
+      REDSTONE_ORE: 19, BEDROCK: 20
+    };
+
+    // Hardness in Seconds to break with hand/basic pickaxe
+    const BLOCK_HARDNESS = {
+      [BLOCKS.LEAVES]: 0.2,
+      [BLOCKS.GRASS]: 0.5,
+      [BLOCKS.DIRT]: 0.5,
+      [BLOCKS.SAND]: 0.5,
+      [BLOCKS.CACTUS]: 0.4,
+      [BLOCKS.PLANKS]: 1.2,
+      [BLOCKS.WOOD]: 1.5,
+      [BLOCKS.GLASS]: 0.3,
+      [BLOCKS.STONE]: 2.0,
+      [BLOCKS.SANDSTONE]: 1.5,
+      [BLOCKS.COAL_ORE]: 2.5,
+      [BLOCKS.IRON_ORE]: 3.0,
+      [BLOCKS.GOLD_ORE]: 3.5,
+      [BLOCKS.REDSTONE_ORE]: 3.5,
+      [BLOCKS.DIAMOND_ORE]: 4.5,
+      [BLOCKS.BRICK]: 2.5,
+      [BLOCKS.OBSIDIAN]: 10.0,
+      [BLOCKS.BEDROCK]: Infinity
+    };
+
+    const TEX = {
+      GRASS_TOP: 0, GRASS_SIDE: 1, DIRT: 2, STONE: 3, WOOD_SIDE: 4, WOOD_TOP: 5,
+      LEAVES: 6, SAND: 7, WATER: 8, GOLD_ORE: 9, IRON_ORE: 10, DIAMOND_ORE: 11,
+      OBSIDIAN: 12, TORCH: 13, BRICK: 14, GLASS: 15, PLANKS: 16, CACTUS_SIDE: 17,
+      CACTUS_TOP: 18, SANDSTONE_SIDE: 19, SANDSTONE_TOP: 20, COAL_ORE: 21,
+      REDSTONE_ORE: 22, BEDROCK: 23,
+      // Breaking crack stages (24 to 33)
+      CRACK_0: 24, CRACK_1: 25, CRACK_2: 26, CRACK_3: 27, CRACK_4: 28,
+      CRACK_5: 29, CRACK_6: 30, CRACK_7: 31, CRACK_8: 32, CRACK_9: 33
+    };
+
+    function drawTile(tileIndex, pixelRenderer) {
+      const col = tileIndex % (ATLAS_SIZE / TILE_SIZE);
+      const row = Math.floor(tileIndex / (ATLAS_SIZE / TILE_SIZE));
+      const startX = col * TILE_SIZE;
+      const startY = row * TILE_SIZE;
+      const imgData = ctx.createImageData(TILE_SIZE, TILE_SIZE);
+      for (let y = 0; y < TILE_SIZE; y++) {
+        for (let x = 0; x < TILE_SIZE; x++) {
+          const color = pixelRenderer(x, y);
+          const i = (x + y * TILE_SIZE) * 4;
+          imgData.data[i] = color[0];
+          imgData.data[i+1] = color[1];
+          imgData.data[i+2] = color[2];
+          imgData.data[i+3] = color[3] !== undefined ? color[3] : 255;
+        }
+      }
+      ctx.putImageData(imgData, startX, startY);
+    }
+
+    function noise(x, y, seed=1) {
+      const n = Math.sin(x * 12.9898 + y * 78.233 + seed) * 43758.5453;
+      return n - Math.floor(n);
+    }
+
+    // Generate Textures
+    drawTile(TEX.DIRT, (x, y) => {
+      const n = noise(x, y, 10);
+      const base = 86 + Math.floor(n * 24);
+      return [base + 20, base - 10, base - 35];
+    });
+    drawTile(TEX.GRASS_TOP, (x, y) => {
+      const n = noise(x, y, 20);
+      const g = 140 + Math.floor(n * 40);
+      return [g - 60, g, g - 90];
+    });
+    drawTile(TEX.GRASS_SIDE, (x, y) => {
+      if (y < 4 + Math.floor(noise(x, 0, 30) * 3)) {
+        const n = noise(x, y, 20);
+        const g = 135 + Math.floor(n * 35);
+        return [g - 60, g, g - 90];
+      }
+      const n = noise(x, y, 10);
+      const base = 86 + Math.floor(n * 24);
+      return [base + 20, base - 10, base - 35];
+    });
+    drawTile(TEX.STONE, (x, y) => {
+      const n = noise(x, y, 40);
+      const val = 110 + Math.floor(n * 35);
+      return [val, val, val];
+    });
+    drawTile(TEX.WOOD_SIDE, (x, y) => {
+      const stripe = (x % 4 === 0) ? 20 : 0;
+      const n = noise(x, y, 50);
+      const r = 105 - stripe + Math.floor(n * 15);
+      return [r, Math.floor(r * 0.65), Math.floor(r * 0.35)];
+    });
+    drawTile(TEX.WOOD_TOP, (x, y) => {
+      const dist = Math.sqrt((x-7.5)*(x-7.5) + (y-7.5)*(y-7.5));
+      const ring = Math.floor(dist) % 2 === 0 ? 25 : 0;
+      return [160 - ring, 120 - ring, 70 - ring];
+    });
+    drawTile(TEX.LEAVES, (x, y) => {
+      const n = noise(x, y, 60);
+      if (n < 0.15) return [0, 0, 0, 0];
+      const g = 120 + Math.floor(n * 50);
+      return [Math.floor(g * 0.3), g, Math.floor(g * 0.2)];
+    });
+    drawTile(TEX.SAND, (x, y) => {
+      const n = noise(x, y, 70);
+      const val = 210 + Math.floor(n * 25);
+      return [val, val - 20, val - 70];
+    });
+    drawTile(TEX.WATER, (x, y) => {
+      const n = noise(x, y, 80);
+      return [40, 100 + Math.floor(n * 40), 220 + Math.floor(n * 30), 210];
+    });
+    drawTile(TEX.GOLD_ORE, (x, y) => {
+      const n = noise(x, y, 90);
+      if (n > 0.72) return [255, 215, 0];
+      const val = 110 + Math.floor(n * 35);
+      return [val, val, val];
+    });
+    drawTile(TEX.IRON_ORE, (x, y) => {
+      const n = noise(x, y, 95);
+      if (n > 0.72) return [215, 175, 140];
+      const val = 110 + Math.floor(n * 35);
+      return [val, val, val];
+    });
+    drawTile(TEX.DIAMOND_ORE, (x, y) => {
+      const n = noise(x, y, 100);
+      if (n > 0.72) return [0, 240, 255];
+      const val = 110 + Math.floor(n * 35);
+      return [val, val, val];
+    });
+    drawTile(TEX.COAL_ORE, (x, y) => {
+      const n = noise(x, y, 105);
+      if (n > 0.72) return [30, 30, 30];
+      const val = 110 + Math.floor(n * 35);
+      return [val, val, val];
+    });
+    drawTile(TEX.REDSTONE_ORE, (x, y) => {
+      const n = noise(x, y, 108);
+      if (n > 0.72) return [255, 40, 40];
+      const val = 110 + Math.floor(n * 35);
+      return [val, val, val];
+    });
+    drawTile(TEX.OBSIDIAN, (x, y) => {
+      const n = noise(x, y, 110);
+      return [25 + Math.floor(n * 15), 15 + Math.floor(n * 10), 35 + Math.floor(n * 25)];
+    });
+    drawTile(TEX.BEDROCK, (x, y) => {
+      const n = noise(x, y, 115);
+      const val = 40 + Math.floor(n * 50);
+      return [val, val, val];
+    });
+    drawTile(TEX.CACTUS_SIDE, (x, y) => {
+      const stripe = (x % 3 === 0) ? 30 : 0;
+      return [30 + stripe, 120 + stripe, 40 + stripe];
+    });
+    drawTile(TEX.CACTUS_TOP, (x, y) => {
+      return [40, 140, 50];
+    });
+    drawTile(TEX.SANDSTONE_SIDE, (x, y) => {
+      const n = noise(x, y, 120);
+      return [210 + Math.floor(n * 15), 190 + Math.floor(n * 15), 130 + Math.floor(n * 15)];
+    });
+    drawTile(TEX.SANDSTONE_TOP, (x, y) => {
+      return [220, 200, 140];
+    });
+    drawTile(TEX.PLANKS, (x, y) => {
+      const isSeam = (y % 4 === 0) || (x % 16 === 0);
+      if (isSeam) return [80, 55, 25];
+      const n = noise(x, y, 140);
+      return [160 + Math.floor(n*20), 120 + Math.floor(n*15), 70 + Math.floor(n*10)];
+    });
+    drawTile(TEX.BRICK, (x, y) => {
+      const isMortar = (y % 4 === 0) || ((y < 4 || (y >= 8 && y < 12)) && x % 8 === 0) || ((y >= 4 && y < 8 || y >= 12) && (x + 4) % 8 === 0);
+      if (isMortar) return [180, 180, 180];
+      const n = noise(x, y, 130);
+      return [160 + Math.floor(n * 30), 60 + Math.floor(n * 20), 50 + Math.floor(n * 20)];
+    });
+    drawTile(TEX.GLASS, (x, y) => {
+      if (x === 0 || x === 15 || y === 0 || y === 15 || (x === y && x < 5)) return [220, 240, 255, 230];
+      return [200, 230, 255, 50];
+    });
+
+    // 10 Progressive Destruction Stages (CRACK_0 to CRACK_9)
+    for (let stage = 0; stage < 10; stage++) {
+      drawTile(TEX.CRACK_0 + stage, (x, y) => {
+        const n = noise(x, y, stage * 17.3);
+        const threshold = 0.95 - stage * 0.085;
+        if (n > threshold) {
+          return [0, 0, 0, 230];
+        }
+        return [0, 0, 0, 0];
+      });
+    }
+
+    const atlasTexture = new THREE.CanvasTexture(atlasCanvas);
+    atlasTexture.magFilter = THREE.NearestFilter;
+    atlasTexture.minFilter = THREE.NearestFilter;
+    atlasTexture.generateMipmaps = false;
+
+    const blockMaterial = new THREE.MeshLambertMaterial({
+      map: atlasTexture,
+      transparent: true,
+      alphaTest: 0.1,
+      side: THREE.FrontSide
+    });
+
+    const TILES_PER_ROW = ATLAS_SIZE / TILE_SIZE; // 16
+    const UV_STEP = 1.0 / TILES_PER_ROW;
+
+    function getTileUVs(tileIdx) {
+      const col = tileIdx % TILES_PER_ROW;
+      const row = Math.floor(tileIdx / TILES_PER_ROW);
+      const u0 = col * UV_STEP;
+      const v0 = 1.0 - (row + 1) * UV_STEP;
+      const u1 = u0 + UV_STEP;
+      const v1 = v0 + UV_STEP;
+      return { u0, v0, u1, v1 };
+    }
+
+    const BLOCK_TEXTURES = {
+      [BLOCKS.GRASS]: { top: TEX.GRASS_TOP, bottom: TEX.DIRT, side: TEX.GRASS_SIDE },
+      [BLOCKS.DIRT]: { all: TEX.DIRT },
+      [BLOCKS.STONE]: { all: TEX.STONE },
+      [BLOCKS.WOOD]: { top: TEX.WOOD_TOP, bottom: TEX.WOOD_TOP, side: TEX.WOOD_SIDE },
+      [BLOCKS.LEAVES]: { all: TEX.LEAVES },
+      [BLOCKS.SAND]: { all: TEX.SAND },
+      [BLOCKS.WATER]: { all: TEX.WATER },
+      [BLOCKS.GOLD_ORE]: { all: TEX.GOLD_ORE },
+      [BLOCKS.IRON_ORE]: { all: TEX.IRON_ORE },
+      [BLOCKS.DIAMOND_ORE]: { all: TEX.DIAMOND_ORE },
+      [BLOCKS.COAL_ORE]: { all: TEX.COAL_ORE },
+      [BLOCKS.REDSTONE_ORE]: { all: TEX.REDSTONE_ORE },
+      [BLOCKS.OBSIDIAN]: { all: TEX.OBSIDIAN },
+      [BLOCKS.BEDROCK]: { all: TEX.BEDROCK },
+      [BLOCKS.CACTUS]: { top: TEX.CACTUS_TOP, bottom: TEX.CACTUS_TOP, side: TEX.CACTUS_SIDE },
+      [BLOCKS.SANDSTONE]: { top: TEX.SANDSTONE_TOP, bottom: TEX.SANDSTONE_TOP, side: TEX.SANDSTONE_SIDE },
+      [BLOCKS.BRICK]: { all: TEX.BRICK },
+      [BLOCKS.GLASS]: { all: TEX.GLASS },
+      [BLOCKS.PLANKS]: { all: TEX.PLANKS }
+    };
+
+    function getBlockFaceTexture(blockId, faceName) {
+      const def = BLOCK_TEXTURES[blockId] || { all: TEX.STONE };
+      if (def.all !== undefined) return def.all;
+      if (faceName === 'top') return def.top;
+      if (faceName === 'bottom') return def.bottom;
+      return def.side;
+    }
+
+    /* =========================================================================
+       2. THREE.JS SCENE SETUP & LIGHTING
+       ========================================================================= */
+    const canvas = document.getElementById('game-canvas');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x70b5ff);
+    scene.fog = new THREE.FogExp2(0x70b5ff, 0.015);
+
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 300);
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    const sunLight = new THREE.DirectionalLight(0xfffae6, 1.35);
+    sunLight.position.set(50, 80, 40);
+    scene.add(sunLight);
+
+    const ambientLight = new THREE.AmbientLight(0xcce2ff, 0.55);
+    scene.add(ambientLight);
+
+    // 3D Breaking Box Overlay (Wireframe & Progressive Cracks)
+    const breakBoxGeo = new THREE.BoxGeometry(1.002, 1.002, 1.002);
+    const breakBoxMat = new THREE.MeshBasicMaterial({
+      map: atlasTexture,
+      transparent: true,
+      depthTest: true,
+      polygonOffset: true,
+      polygonOffsetFactor: -1,
+      polygonOffsetUnits: -1
+    });
+    const breakBoxMesh = new THREE.Mesh(breakBoxGeo, breakBoxMat);
+    breakBoxMesh.visible = false;
+    scene.add(breakBoxMesh);
+
+    function updateBreakBoxTexture(stage) {
+      if (stage < 0 || stage > 9) {
+        breakBoxMesh.visible = false;
+        return;
+      }
+      breakBoxMesh.visible = true;
+      const { u0, v0, u1, v1 } = getTileUVs(TEX.CRACK_0 + stage);
+      const uvs = breakBoxGeo.attributes.uv;
+      for (let i = 0; i < 6; i++) {
+        uvs.setXY(i * 4 + 0, u0, v1);
+        uvs.setXY(i * 4 + 1, u1, v1);
+        uvs.setXY(i * 4 + 2, u0, v0);
+        uvs.setXY(i * 4 + 3, u1, v0);
+      }
+      uvs.needsUpdate = true;
+    }
+
+    /* =========================================================================
+       3. ADVANCED MULTI-BIOME VOXEL WORLD ENGINE (8-CHUNK STREAMING)
+       ========================================================================= */
+    const CHUNK_SIZE = 16;
+    const CHUNK_HEIGHT = 48;
+    let RENDER_DISTANCE = 3; // ~8 chunk diameter surrounding player
+
+    let worldConfig = {
+      name: "My World",
+      type: "default",
+      gameMode: "survival",
+      seedVal: 12345
+    };
+
+    class WorldEngine {
+      constructor() {
+        this.chunks = new Map();
+        this.chunkMeshes = new Map();
+        this.meshQueue = [];
+        this.lastCheckedCX = null;
+        this.lastCheckedCZ = null;
+      }
+
+      reset() {
+        this.chunkMeshes.forEach(mesh => {
+          scene.remove(mesh);
+          mesh.geometry.dispose();
+        });
+        this.chunkMeshes.clear();
+        this.chunks.clear();
+        this.meshQueue = [];
+        this.lastCheckedCX = null;
+        this.lastCheckedCZ = null;
+      }
+
+      getKey(cx, cz) { return `${cx},${cz}`; }
+
+      getVoxel(x, y, z) {
+        if (y < 0 || y >= CHUNK_HEIGHT) return BLOCKS.AIR;
+        const cx = Math.floor(x / CHUNK_SIZE);
+        const cz = Math.floor(z / CHUNK_SIZE);
+        const chunk = this.chunks.get(this.getKey(cx, cz));
+        if (!chunk) return BLOCKS.AIR;
+        const lx = (x % CHUNK_SIZE + CHUNK_SIZE) % CHUNK_SIZE;
+        const lz = (z % CHUNK_SIZE + CHUNK_SIZE) % CHUNK_SIZE;
+        return chunk[lx + lz * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE];
+      }
+
+      setVoxel(x, y, z, blockId) {
+        if (y < 0 || y >= CHUNK_HEIGHT) return;
+        const cx = Math.floor(x / CHUNK_SIZE);
+        const cz = Math.floor(z / CHUNK_SIZE);
+        const key = this.getKey(cx, cz);
+        let chunk = this.chunks.get(key);
+        if (!chunk) {
+          chunk = new Uint8Array(CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT);
+          this.chunks.set(key, chunk);
+        }
+        const lx = (x % CHUNK_SIZE + CHUNK_SIZE) % CHUNK_SIZE;
+        const lz = (z % CHUNK_SIZE + CHUNK_SIZE) % CHUNK_SIZE;
+        chunk[lx + lz * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = blockId;
+
+        this.buildMesh(cx, cz);
+        if (lx === 0) this.buildMesh(cx - 1, cz);
+        if (lx === CHUNK_SIZE - 1) this.buildMesh(cx + 1, cz);
+        if (lz === 0) this.buildMesh(cx, cz - 1);
+        if (lz === CHUNK_SIZE - 1) this.buildMesh(cx, cz + 1);
+      }
+
+      generateChunk(cx, cz) {
+        const key = this.getKey(cx, cz);
+        if (this.chunks.has(key)) return;
+
+        const data = new Uint8Array(CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT);
+        const wx0 = cx * CHUNK_SIZE;
+        const wz0 = cz * CHUNK_SIZE;
+        const seed = worldConfig.seedVal;
+
+        for (let lx = 0; lx < CHUNK_SIZE; lx++) {
+          for (let lz = 0; lz < CHUNK_SIZE; lz++) {
+            const wx = wx0 + lx;
+            const wz = wz0 + lz;
+
+            let height = 18;
+            let biome = "plains";
+
+            if (worldConfig.type === 'flat') {
+              height = 10;
+              biome = "plains";
+            } else if (worldConfig.type === 'amplified') {
+              const h1 = Math.sin(wx * 0.04 + seed) * Math.cos(wz * 0.04 + seed) * 16;
+              const h2 = Math.sin(wx * 0.09) * 4;
+              height = Math.max(6, Math.min(CHUNK_HEIGHT - 4, Math.floor(22 + h1 + h2)));
+              biome = "mountains";
+            } else if (worldConfig.type === 'desert') {
+              const h1 = Math.sin(wx * 0.03 + seed) * Math.cos(wz * 0.03 + seed) * 4;
+              height = Math.max(8, Math.min(CHUNK_HEIGHT - 8, Math.floor(16 + h1)));
+              biome = "desert";
+            } else {
+              // Default Multi-Biome (Plains, Mountains, Forest, Desert, Ocean)
+              const biomeNoise = Math.sin(wx * 0.012 + seed) + Math.cos(wz * 0.012 + seed);
+              if (biomeNoise > 0.8) biome = "mountains";
+              else if (biomeNoise < -0.8) biome = "desert";
+              else if (biomeNoise < -0.2) biome = "ocean";
+              else biome = "plains";
+
+              let baseH = 18;
+              if (biome === "mountains") baseH = 26 + Math.sin(wx * 0.05) * 8;
+              else if (biome === "desert") baseH = 16 + Math.sin(wx * 0.03) * 3;
+              else if (biome === "ocean") baseH = 11 + Math.cos(wz * 0.03) * 3;
+              else baseH = 18 + Math.sin(wx * 0.04) * 4;
+
+              height = Math.max(4, Math.min(CHUNK_HEIGHT - 6, Math.floor(baseH)));
+            }
+
+            // Fill Vertical Column
+            for (let y = 0; y < CHUNK_HEIGHT; y++) {
+              const idx = lx + lz * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE;
+              if (y === 0) {
+                data[idx] = BLOCKS.BEDROCK;
+              } else if (y < height - 3) {
+                // 3D Cave generation & Ore Veins
+                const caveNoise = Math.sin(wx*0.15 + y*0.2) * Math.cos(wz*0.15 + y*0.2);
+                if (caveNoise > 0.65 && y > 3 && y < height - 4) {
+                  data[idx] = BLOCKS.AIR; // Underground cave!
+                } else {
+                  const ore = noise(wx, wz, y * 0.7 + seed);
+                  if (ore > 0.88 && y < 12) data[idx] = BLOCKS.DIAMOND_ORE;
+                  else if (ore > 0.80 && y < 18) data[idx] = BLOCKS.GOLD_ORE;
+                  else if (ore > 0.70 && y < 24) data[idx] = BLOCKS.REDSTONE_ORE;
+                  else if (ore > 0.60) data[idx] = BLOCKS.IRON_ORE;
+                  else if (ore > 0.50) data[idx] = BLOCKS.COAL_ORE;
+                  else data[idx] = BLOCKS.STONE;
+                }
+              } else if (y < height) {
+                if (biome === "desert") data[idx] = BLOCKS.SANDSTONE;
+                else data[idx] = BLOCKS.DIRT;
+              } else if (y === height) {
+                if (biome === "desert") data[idx] = BLOCKS.SAND;
+                else if (height <= 13) data[idx] = BLOCKS.SAND;
+                else if (biome === "mountains" && height > 28) data[idx] = BLOCKS.STONE;
+                else data[idx] = BLOCKS.GRASS;
+              } else if (y <= 13) {
+                data[idx] = BLOCKS.WATER;
+              }
+            }
+
+            // Trees in Plains/Forest, Cacti in Desert
+            if (biome === "desert" && height >= 14 && noise(wx, wz, 77) > 0.985) {
+              const cy = height + 1;
+              for (let c = 0; c < 3; c++) {
+                if (cy + c < CHUNK_HEIGHT) data[lx + lz * CHUNK_SIZE + (cy + c) * CHUNK_SIZE * CHUNK_SIZE] = BLOCKS.CACTUS;
+              }
+            } else if (biome !== "desert" && height >= 14 && noise(wx, wz, 99) > 0.965 && lx >= 2 && lx < CHUNK_SIZE - 2 && lz >= 2 && lz < CHUNK_SIZE - 2) {
+              const ty = height + 1;
+              for (let t = 0; t < 4; t++) {
+                if (ty + t < CHUNK_HEIGHT) data[lx + lz * CHUNK_SIZE + (ty + t) * CHUNK_SIZE * CHUNK_SIZE] = BLOCKS.WOOD;
+              }
+              for (let ox = -2; ox <= 2; ox++) {
+                for (let oz = -2; oz <= 2; oz++) {
+                  for (let oy = 2; oy <= 3; oy++) {
+                    if (Math.abs(ox) === 2 && Math.abs(oz) === 2 && oy === 3) continue;
+                    const flx = lx + ox;
+                    const flz = lz + oz;
+                    const fly = ty + oy;
+                    if (flx >= 0 && flx < CHUNK_SIZE && flz >= 0 && flz < CHUNK_SIZE && fly < CHUNK_HEIGHT) {
+                      const fidx = flx + flz * CHUNK_SIZE + fly * CHUNK_SIZE * CHUNK_SIZE;
+                      if (data[fidx] === BLOCKS.AIR) data[fidx] = BLOCKS.LEAVES;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        this.chunks.set(key, data);
+      }
+
+      buildMesh(cx, cz) {
+        const key = this.getKey(cx, cz);
+        const data = this.chunks.get(key);
+        if (!data) return;
+
+        if (this.chunkMeshes.has(key)) {
+          const old = this.chunkMeshes.get(key);
+          scene.remove(old);
+          old.geometry.dispose();
+          this.chunkMeshes.delete(key);
+        }
+
+        const positions = [];
+        const normals = [];
+        const uvs = [];
+
+        const wx0 = cx * CHUNK_SIZE;
+        const wz0 = cz * CHUNK_SIZE;
+
+        const FACES = [
+          { name: 'top',    dir: [0, 1, 0], norm: [0, 1, 0], v: [[0,1,1],[1,1,1],[1,1,0],[0,1,0]] },
+          { name: 'bottom', dir: [0,-1, 0], norm: [0,-1, 0], v: [[0,0,0],[1,0,0],[1,0,1],[0,0,1]] },
+          { name: 'north',  dir: [0, 0, 1], norm: [0, 0, 1], v: [[0,0,1],[1,0,1],[1,1,1],[0,1,1]] },
+          { name: 'south',  dir: [0, 0,-1], norm: [0, 0,-1], v: [[1,0,0],[0,0,0],[0,1,0],[1,1,0]] },
+          { name: 'east',   dir: [1, 0, 0], norm: [1, 0, 0], v: [[1,0,1],[1,0,0],[1,1,0],[1,1,1]] },
+          { name: 'west',   dir: [-1,0, 0], norm: [-1,0, 0], v: [[0,0,0],[0,0,1],[0,1,1],[0,1,0]] }
+        ];
+
+        for (let lx = 0; lx < CHUNK_SIZE; lx++) {
+          for (let lz = 0; lz < CHUNK_SIZE; lz++) {
+            for (let y = 0; y < CHUNK_HEIGHT; y++) {
+              const block = data[lx + lz * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE];
+              if (!block || block === BLOCKS.AIR) continue;
+
+              const x = wx0 + lx;
+              const z = wz0 + lz;
+
+              for (const face of FACES) {
+                const neighbor = this.getVoxel(x + face.dir[0], y + face.dir[1], z + face.dir[2]);
+                const isNeighborTransparent = (neighbor === BLOCKS.AIR || neighbor === BLOCKS.WATER || neighbor === BLOCKS.GLASS || neighbor === BLOCKS.LEAVES);
+
+                if (isNeighborTransparent && neighbor !== block) {
+                  const texIdx = getBlockFaceTexture(block, face.name);
+                  const { u0, v0, u1, v1 } = getTileUVs(texIdx);
+
+                  const v = face.v;
+                  const p0 = [x + v[0][0], y + v[0][1], z + v[0][2]];
+                  const p1 = [x + v[1][0], y + v[1][1], z + v[1][2]];
+                  const p2 = [x + v[2][0], y + v[2][1], z + v[2][2]];
+                  const p3 = [x + v[3][0], y + v[3][1], z + v[3][2]];
+
+                  positions.push(...p0, ...p1, ...p2, ...p0, ...p2, ...p3);
+                  for (let i = 0; i < 6; i++) normals.push(...face.norm);
+                  uvs.push(
+                    u0, v0,
+                    u1, v0,
+                    u1, v1,
+                    u0, v0,
+                    u1, v1,
+                    u0, v1
+                  );
+                }
+              }
+            }
+          }
+        }
+
+        if (positions.length === 0) return;
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+        geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+
+        const mesh = new THREE.Mesh(geometry, blockMaterial);
+        scene.add(mesh);
+        this.chunkMeshes.set(key, mesh);
+      }
+
+      updateChunksAround(px, pz, force = false) {
+        const curCX = Math.floor(px / CHUNK_SIZE);
+        const curCZ = Math.floor(pz / CHUNK_SIZE);
+
+        if (!force && curCX === this.lastCheckedCX && curCZ === this.lastCheckedCZ) {
+          if (this.meshQueue.length > 0) {
+            const item = this.meshQueue.shift();
+            if (!this.chunkMeshes.has(this.getKey(item.cx, item.cz))) {
+              this.buildMesh(item.cx, item.cz);
+            }
+          }
+          return;
+        }
+
+        this.lastCheckedCX = curCX;
+        this.lastCheckedCZ = curCZ;
+
+        for (let dx = -RENDER_DISTANCE; dx <= RENDER_DISTANCE; dx++) {
+          for (let dz = -RENDER_DISTANCE; dz <= RENDER_DISTANCE; dz++) {
+            const cx = curCX + dx;
+            const cz = curCZ + dz;
+            this.generateChunk(cx, cz);
+            if (!this.chunkMeshes.has(this.getKey(cx, cz))) {
+              if (force || (Math.abs(dx) <= 1 && Math.abs(dz) <= 1)) {
+                this.buildMesh(cx, cz);
+              } else {
+                this.meshQueue.push({ cx, cz });
+              }
+            }
+          }
+        }
+      }
+    }
+
+    const world = new WorldEngine();
+
+    /* =========================================================================
+       4. PLAYER STATE, INVENTORY & SURVIVAL MECHANICS
+       ========================================================================= */
+    const player = {
+      pos: new THREE.Vector3(8.5, 24.0, 8.5),
+      vel: new THREE.Vector3(0, 0, 0),
+      yaw: 0,
+      pitch: 0,
+      width: 0.6,
+      height: 1.8,
+      eyeHeight: 1.62,
+      onGround: false,
+      speed: 6.0,
+      jumpForce: 8.5,
+      hp: 20, // 10 Hearts (20 HP)
+      maxHp: 20,
+      hunger: 20, // 10 Drumsticks (20 Food)
+      maxHunger: 20
+    };
+
+    let isSneaking = false;
+    let autoStep = true;
+    let invertY = false;
+    let invertX = false;
+
+    // Items & Food
+    const inventory = [
+      { id: BLOCKS.STONE, count: 64, name: "Stone", isFood: false },
+      { id: BLOCKS.WOOD, count: 32, name: "Wood Log", isFood: false },
+      { id: BLOCKS.PLANKS, count: 64, name: "Planks", isFood: false },
+      { id: 'apple', count: 16, name: "Red Apple", isFood: true, foodVal: 4, healVal: 2 },
+      { id: 'bread', count: 12, name: "Loaf of Bread", isFood: true, foodVal: 5, healVal: 3 },
+      { id: BLOCKS.BRICK, count: 32, name: "Brick", isFood: false },
+      { id: BLOCKS.TORCH, count: 16, name: "Torch", isFood: false },
+      { id: BLOCKS.GLASS, count: 24, name: "Glass", isFood: false },
+      { id: BLOCKS.DIAMOND_ORE, count: 8, name: "Diamond", isFood: false }
+    ];
+    let activeSlot = 0;
+
+    function renderHUDVitals() {
+      // 10 Hearts
+      const hContainer = document.getElementById('hearts-container');
+      hContainer.innerHTML = '';
+      const fullHearts = Math.floor(player.hp / 2);
+      for (let i = 0; i < 10; i++) {
+        const h = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        h.setAttribute("class", "vital-icon");
+        h.setAttribute("viewBox", "0 0 24 24");
+        h.style.fill = (i < fullHearts) ? "#ef4444" : "#475569";
+        h.innerHTML = '<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>';
+        hContainer.appendChild(h);
+      }
+
+      // 10 Hunger Drumsticks
+      const fContainer = document.getElementById('hunger-container');
+      fContainer.innerHTML = '';
+      const fullFood = Math.floor(player.hunger / 2);
+      for (let i = 0; i < 10; i++) {
+        const f = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        f.setAttribute("class", "vital-icon hunger-icon");
+        f.setAttribute("viewBox", "0 0 24 24");
+        f.style.fill = (i < fullFood) ? "#f59e0b" : "#475569";
+        f.innerHTML = '<path d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05z"/>';
+        fContainer.appendChild(f);
+      }
+    }
+
+    function renderHotbar() {
+      const el = document.getElementById('hotbar');
+      el.innerHTML = '';
+      for (let i = 0; i < 9; i++) {
+        const item = inventory[i];
+        const slot = document.createElement('div');
+        slot.className = `hotbar-slot ${i === activeSlot ? 'active' : ''}`;
+        slot.onclick = () => { activeSlot = i; renderHotbar(); };
+
+        if (item && item.count > 0) {
+          if (typeof item.id === 'number') {
+            const texIdx = getBlockFaceTexture(item.id, 'side');
+            const col = texIdx % TILES_PER_ROW;
+            const row = Math.floor(texIdx / TILES_PER_ROW);
+
+            const iconCanvas = document.createElement('canvas');
+            iconCanvas.width = 16;
+            iconCanvas.height = 16;
+            iconCanvas.className = 'slot-icon';
+            const ictx = iconCanvas.getContext('2d');
+            ictx.drawImage(atlasCanvas, col * 16, row * 16, 16, 16, 0, 0, 16, 16);
+            slot.appendChild(iconCanvas);
+          } else {
+            // Food Icon
+            const foodSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            foodSvg.setAttribute("class", "slot-icon");
+            foodSvg.setAttribute("viewBox", "0 0 24 24");
+            foodSvg.style.fill = (item.id === 'apple') ? '#ef4444' : '#f59e0b';
+            foodSvg.innerHTML = '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>';
+            slot.appendChild(foodSvg);
+          }
+
+          const num = document.createElement('span');
+          num.className = 'slot-num';
+          num.innerText = item.count;
+          slot.appendChild(num);
+        }
+        el.appendChild(slot);
+      }
+    }
+
+    function renderInventory() {
+      const el = document.getElementById('inv-matrix');
+      el.innerHTML = '';
+      for (let i = 0; i < 27; i++) {
+        const item = inventory[i];
+        const cell = document.createElement('div');
+        cell.className = 'inv-cell';
+        if (item && item.count > 0) {
+          if (typeof item.id === 'number') {
+            const texIdx = getBlockFaceTexture(item.id, 'side');
+            const col = texIdx % TILES_PER_ROW;
+            const row = Math.floor(texIdx / TILES_PER_ROW);
+            const c = document.createElement('canvas');
+            c.width = 16; c.height = 16;
+            c.style.width = '24px'; c.style.height = '24px';
+            c.style.imageRendering = 'pixelated';
+            c.getContext('2d').drawImage(atlasCanvas, col*16, row*16, 16, 16, 0, 0, 16, 16);
+            cell.appendChild(c);
+          }
+          cell.onclick = () => {
+            activeSlot = Math.min(i, 8);
+            renderHotbar();
+            closeModals();
+          };
+        }
+        el.appendChild(cell);
+      }
+    }
+
+    function craftItem(recipe) {
+      if (recipe === 'planks') {
+        inventory.push({ id: BLOCKS.PLANKS, count: 16, name: "Planks", isFood: false });
+        showToast("Crafted 16 Wood Planks!");
+      } else if (recipe === 'torch') {
+        inventory.push({ id: BLOCKS.TORCH, count: 16, name: "Torch", isFood: false });
+        showToast("Crafted 16 Torches!");
+      } else if (recipe === 'bread') {
+        inventory.push({ id: 'bread', count: 3, name: "Loaf of Bread", isFood: true, foodVal: 5, healVal: 3 });
+        showToast("Baked 3 Loaves of Bread!");
+      } else if (recipe === 'bricks') {
+        inventory.push({ id: BLOCKS.BRICK, count: 16, name: "Bricks", isFood: false });
+        showToast("Crafted 16 Stone Bricks!");
+      }
+      renderHotbar();
+      closeModals();
+    }
+
+    function eatActiveFood() {
+      const item = inventory[activeSlot];
+      if (item && item.isFood && item.count > 0) {
+        item.count--;
+        player.hunger = Math.min(player.maxHunger, player.hunger + (item.foodVal || 4));
+        player.hp = Math.min(player.maxHp, player.hp + (item.healVal || 2));
+        renderHUDVitals();
+        renderHotbar();
+        showToast(`Yum! Ate ${item.name}`);
+      } else {
+        showToast("Select a food item (Apple/Bread) to eat!");
+      }
+    }
+
+    /* =========================================================================
+       5. CONTINUOUS PROGRESSIVE BLOCK MINING WITH CRACK OVERLAY
+       ========================================================================= */
+    const raycaster = new THREE.Raycaster();
+    raycaster.far = 5.5; // Reach distance
+    const screenCenter = new THREE.Vector2(0, 0);
+
+    let isMining = false;
+    let currentMiningBlock = null;
+    let miningProgress = 0; // 0.0 to 1.0
+
+    function getTargetBlock() {
+      raycaster.setFromCamera(screenCenter, camera);
+      const meshes = Array.from(world.chunkMeshes.values());
+      const intersects = raycaster.intersectObjects(meshes);
+      if (intersects.length === 0) return null;
+
+      const hit = intersects[0];
+      const point = hit.point.clone().sub(hit.face.normal.clone().multiplyScalar(0.05));
+      const bx = Math.floor(point.x);
+      const by = Math.floor(point.y);
+      const bz = Math.floor(point.z);
+      const blockId = world.getVoxel(bx, by, bz);
+
+      const placePoint = hit.point.clone().add(hit.face.normal.clone().multiplyScalar(0.05));
+      const px = Math.floor(placePoint.x);
+      const py = Math.floor(placePoint.y);
+      const pz = Math.floor(placePoint.z);
+
+      return {
+        block: { x: bx, y: by, z: bz, id: blockId },
+        place: { x: px, y: py, z: pz }
+      };
+    }
+
+    function updateMiningState(dt) {
+      if (!isMining) {
+        if (currentMiningBlock) {
+          currentMiningBlock = null;
+          miningProgress = 0;
+          updateBreakBoxTexture(-1);
+        }
+        return;
+      }
+
+      const target = getTargetBlock();
+      if (!target || target.block.id === BLOCKS.AIR || target.block.id === BLOCKS.BEDROCK) {
+        currentMiningBlock = null;
+        miningProgress = 0;
+        updateBreakBoxTexture(-1);
+        return;
+      }
+
+      const tb = target.block;
+      if (!currentMiningBlock || currentMiningBlock.x !== tb.x || currentMiningBlock.y !== tb.y || currentMiningBlock.z !== tb.z) {
+        currentMiningBlock = { ...tb };
+        miningProgress = 0;
+        breakBoxMesh.position.set(tb.x + 0.5, tb.y + 0.5, tb.z + 0.5);
+      }
+
+      // Creative mode = instant break!
+      if (worldConfig.gameMode === 'creative') {
+        world.setVoxel(tb.x, tb.y, tb.z, BLOCKS.AIR);
+        inventory.push({ id: tb.id, count: 1, name: "Mined Block", isFood: false });
+        renderHotbar();
+        currentMiningBlock = null;
+        miningProgress = 0;
+        updateBreakBoxTexture(-1);
+        showToast("Instant Block Broken!");
+        return;
+      }
+
+      const hardness = BLOCK_HARDNESS[tb.id] || 2.0;
+      miningProgress += dt / hardness;
+
+      const stage = Math.min(9, Math.floor(miningProgress * 10));
+      updateBreakBoxTexture(stage);
+
+      if (miningProgress >= 1.0) {
+        // Block successfully broken!
+        world.setVoxel(tb.x, tb.y, tb.z, BLOCKS.AIR);
+        inventory.push({ id: tb.id, count: 1, name: "Block", isFood: false });
+        renderHotbar();
+        showToast("Block Mined!");
+        currentMiningBlock = null;
+        miningProgress = 0;
+        updateBreakBoxTexture(-1);
+      }
+    }
+
+    function placeActiveBlock() {
+      const target = getTargetBlock();
+      if (!target) return;
+      const item = inventory[activeSlot];
+      if (item && typeof item.id === 'number' && item.count > 0) {
+        const tp = target.place;
+        // Check player AABB collision
+        const hw = player.width / 2;
+        if (
+          tp.x >= Math.floor(player.pos.x - hw) && tp.x <= Math.floor(player.pos.x + hw) &&
+          tp.y >= Math.floor(player.pos.y) && tp.y <= Math.floor(player.pos.y + player.height) &&
+          tp.z >= Math.floor(player.pos.z - hw) && tp.z <= Math.floor(player.pos.z + hw)
+        ) {
+          showToast("Cannot place block inside player!");
+          return;
+        }
+
+        world.setVoxel(tp.x, tp.y, tp.z, item.id);
+        item.count--;
+        renderHotbar();
+      }
+    }
+
+    /* =========================================================================
+       6. PHYSICS, COLLISION & CAMERA LOOP
+       ========================================================================= */
+    function isSolidBlock(x, y, z) {
+      const b = world.getVoxel(x, y, z);
+      return b !== BLOCKS.AIR && b !== BLOCKS.WATER;
+    }
+
+    function checkCollision(px, py, pz) {
+      const hw = player.width / 2;
+      const minX = Math.floor(px - hw);
+      const maxX = Math.floor(px + hw);
+      const minY = Math.floor(py);
+      const maxY = Math.floor(py + player.height);
+      const minZ = Math.floor(pz - hw);
+      const maxZ = Math.floor(pz + hw);
+
+      for (let x = minX; x <= maxX; x++) {
+        for (let y = minY; y <= maxY; y++) {
+          for (let z = minZ; z <= maxZ; z++) {
+            if (isSolidBlock(x, y, z)) return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    function respawnPlayer() {
+      let topY = 20;
+      for (let y = CHUNK_HEIGHT - 1; y >= 0; y--) {
+        if (isSolidBlock(8, y, 8)) {
+          topY = y + 1;
+          break;
+        }
+      }
+      player.pos.set(8.5, topY + 0.1, 8.5);
+      player.vel.set(0, 0, 0);
+    }
+
+    function updatePlayerPhysics(dt) {
+      player.vel.y -= 22.0 * dt;
+      if (player.vel.y < -30.0) player.vel.y = -30.0;
+
+      let moveX = 0;
+      let moveZ = 0;
+      if (input.forward) moveZ -= 1;
+      if (input.backward) moveZ += 1;
+      if (input.left) moveX -= 1;
+      if (input.right) moveX += 1;
+
+      const len = Math.hypot(moveX, moveZ);
+      const currentSpeed = isSneaking ? player.speed * 0.45 : player.speed;
+
+      if (len > 0.001) {
+        moveX /= len;
+        moveZ /= len;
+        const sinY = Math.sin(player.yaw);
+        const cosY = Math.cos(player.yaw);
+        player.vel.x = (moveX * cosY - moveZ * sinY) * currentSpeed;
+        player.vel.z = (moveX * sinY + moveZ * cosY) * currentSpeed;
+      } else {
+        player.vel.x = 0;
+        player.vel.z = 0;
+      }
+
+      // X Move & Resolve
+      const dx = player.vel.x * dt;
+      if (!checkCollision(player.pos.x + dx, player.pos.y, player.pos.z)) {
+        player.pos.x += dx;
+      } else if (autoStep && player.onGround && !checkCollision(player.pos.x + dx, player.pos.y + 0.6, player.pos.z)) {
+        player.pos.x += dx;
+        player.pos.y += 0.6;
+      } else {
+        player.vel.x = 0;
+      }
+
+      // Z Move & Resolve
+      const dz = player.vel.z * dt;
+      if (!checkCollision(player.pos.x, player.pos.y, player.pos.z + dz)) {
+        player.pos.z += dz;
+      } else if (autoStep && player.onGround && !checkCollision(player.pos.x, player.pos.y + 0.6, player.pos.z + dz)) {
+        player.pos.z += dz;
+        player.pos.y += 0.6;
+      } else {
+        player.vel.z = 0;
+      }
+
+      // Y Move & Resolve
+      const dy = player.vel.y * dt;
+      if (!checkCollision(player.pos.x, player.pos.y + dy, player.pos.z)) {
+        player.pos.y += dy;
+        player.onGround = false;
+      } else {
+        if (player.vel.y < 0) player.onGround = true;
+        player.vel.y = 0;
+      }
+
+      if (player.pos.y < 1.0) respawnPlayer();
+
+      camera.position.set(player.pos.x, player.pos.y + player.eyeHeight, player.pos.z);
+      camera.rotation.order = 'YXZ';
+      camera.rotation.y = player.yaw;
+      camera.rotation.x = player.pitch;
+
+      updateLocationHUD();
+    }
+
+    let lastHUD = 0;
+    function updateLocationHUD() {
+      const now = performance.now();
+      if (now - lastHUD < 150) return;
+      lastHUD = now;
+
+      const px = player.pos.x.toFixed(1);
+      const py = player.pos.y.toFixed(1);
+      const pz = player.pos.z.toFixed(1);
+      document.getElementById('coord-display').innerText = `XYZ: ${px} / ${py} / ${pz}`;
+
+      const cx = Math.floor(player.pos.x / CHUNK_SIZE);
+      const cz = Math.floor(player.pos.z / CHUNK_SIZE);
+      document.getElementById('chunk-display').innerText = `Chunk: [${cx}, ${cz}]`;
+
+      let deg = Math.round((-player.yaw * 180 / Math.PI) % 360);
+      if (deg < 0) deg += 360;
+      let card = "North";
+      if (deg >= 45 && deg < 135) card = "East";
+      else if (deg >= 135 && deg < 225) card = "South";
+      else if (deg >= 225 && deg < 315) card = "West";
+      document.getElementById('heading-display').innerText = `${card} (${deg}°)`;
+
+      let biome = "Plains";
+      const groundY = player.pos.y;
+      if (groundY < 13) biome = "Ocean / Beach";
+      else if (groundY > 24) biome = "Highlands";
+      else biome = "Forest & Plains";
+      document.getElementById('biome-display').innerText = `Biome: ${biome}`;
+    }
+
+    /* =========================================================================
+       7. TOUCH CONTROLS (MINECRAFT CROSS D-PAD & GESTURES)
+       ========================================================================= */
+    const input = { forward: false, backward: false, left: false, right: false };
+
+    function bindTouchButton(id, onDown, onUp) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const start = (e) => { e.preventDefault(); el.classList.add('pressed'); onDown(); };
+      const end = (e) => { e.preventDefault(); el.classList.remove('pressed'); if (onUp) onUp(); };
+      el.addEventListener('touchstart', start, { passive: false });
+      el.addEventListener('touchend', end, { passive: false });
+      el.addEventListener('touchcancel', end, { passive: false });
+      el.addEventListener('mousedown', start);
+      el.addEventListener('mouseup', end);
+    }
+
+    bindTouchButton('dpad-up', () => input.forward = true, () => input.forward = false);
+    bindTouchButton('dpad-down', () => input.backward = true, () => input.backward = false);
+    bindTouchButton('dpad-left', () => input.left = true, () => input.left = false);
+    bindTouchButton('dpad-right', () => input.right = true, () => input.right = false);
+
+    // Shift Center
+    const shiftBtn = document.getElementById('dpad-shift');
+    shiftBtn.addEventListener('click', () => {
+      isSneaking = !isSneaking;
+      shiftBtn.classList.toggle('active-shift', isSneaking);
+      showToast(isSneaking ? "Sneak / Shift: ON" : "Sneak / Shift: OFF");
+    });
+
+    // Right Action Buttons
+    bindTouchButton('btn-touch-jump', () => {
+      if (player.onGround) {
+        player.vel.y = player.jumpForce;
+        player.onGround = false;
+      }
+    });
+
+    bindTouchButton('btn-touch-mine', () => {
+      isMining = true;
+    }, () => {
+      isMining = false;
+    });
+
+    bindTouchButton('btn-touch-place', () => {
+      placeActiveBlock();
+    });
+
+    bindTouchButton('btn-touch-eat', () => {
+      eatActiveFood();
+    });
+
+    // Camera Swipe Zone
+    let lookTouchId = null;
+    let lastTouchX = 0;
+    let lastTouchY = 0;
+    const lookZone = document.getElementById('touch-look-zone');
+
+    lookZone.addEventListener('touchstart', (e) => {
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const t = e.changedTouches[i];
+        if (lookTouchId === null) {
+          lookTouchId = t.identifier;
+          lastTouchX = t.clientX;
+          lastTouchY = t.clientY;
+          break;
+        }
+      }
+    }, { passive: true });
+
+    lookZone.addEventListener('touchmove', (e) => {
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const t = e.changedTouches[i];
+        if (t.identifier === lookTouchId) {
+          const dx = (t.clientX - lastTouchX) * (invertX ? -1 : 1);
+          const dy = (t.clientY - lastTouchY) * (invertY ? -1 : 1);
+          player.yaw -= dx * 0.005;
+          player.pitch -= dy * 0.005;
+          player.pitch = Math.max(-Math.PI/2 + 0.05, Math.min(Math.PI/2 - 0.05, player.pitch));
+          lastTouchX = t.clientX;
+          lastTouchY = t.clientY;
+          break;
+        }
+      }
+    }, { passive: true });
+
+    const endLook = (e) => {
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === lookTouchId) {
+          lookTouchId = null;
+          break;
+        }
+      }
+    };
+    lookZone.addEventListener('touchend', endLook);
+    lookZone.addEventListener('touchcancel', endLook);
+
+    // Keyboard Fallback
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'KeyW') input.forward = true;
+      if (e.code === 'KeyS') input.backward = true;
+      if (e.code === 'KeyA') input.left = true;
+      if (e.code === 'KeyD') input.right = true;
+      if (e.code === 'Space' && player.onGround) {
+        player.vel.y = player.jumpForce;
+        player.onGround = false;
+      }
+    });
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'KeyW') input.forward = false;
+      if (e.code === 'KeyS') input.backward = false;
+      if (e.code === 'KeyA') input.left = false;
+      if (e.code === 'KeyD') input.right = false;
+    });
+
+    /* =========================================================================
+       8. MAIN MENU & WORLD INITIALIZATION FLOW
+       ========================================================================= */
+    let gameActive = false;
+
+    function openCreateWorldScreen() {
+      document.getElementById('menu-main-view').style.display = 'none';
+      document.getElementById('menu-create-view').style.display = 'flex';
+    }
+
+    function backToMainMenu() {
+      document.getElementById('menu-create-view').style.display = 'none';
+      document.getElementById('menu-main-view').style.display = 'flex';
+    }
+
+    function startQuickGame() {
+      worldConfig.name = "Survival World";
+      worldConfig.type = "default";
+      worldConfig.gameMode = "survival";
+      worldConfig.seedVal = 1337.42;
+      launchGameWorld();
+    }
+
+    function generateAndStartWorld() {
+      const name = document.getElementById('cfg-world-name').value || "Gemini World";
+      const type = document.getElementById('cfg-world-type').value;
+      const gameMode = document.getElementById('cfg-game-mode').value;
+      const seedStr = document.getElementById('cfg-seed').value;
+      let seedVal = Math.random() * 10000;
+      if (seedStr) {
+        let hash = 0;
+        for (let i = 0; i < seedStr.length; i++) hash = ((hash << 5) - hash) + seedStr.charCodeAt(i);
+        seedVal = Math.abs(hash);
+      }
+
+      worldConfig = { name, type, gameMode, seedVal };
+      launchGameWorld();
+    }
+
+    function launchGameWorld() {
+      document.getElementById('menu-container').style.display = 'none';
+      document.getElementById('ui-container').style.display = 'flex';
+      document.getElementById('touch-layer').style.display = 'block';
+
+      world.reset();
+      respawnPlayer();
+      world.updateChunksAround(player.pos.x, player.pos.z, true);
+
+      renderHUDVitals();
+      renderHotbar();
+      renderInventory();
+
+      gameActive = true;
+      showToast(`World "${worldConfig.name}" Ready!`);
+    }
+
+    function pauseAndExitToMenu() {
+      gameActive = false;
+      document.getElementById('ui-container').style.display = 'none';
+      document.getElementById('touch-layer').style.display = 'none';
+      document.getElementById('menu-container').style.display = 'flex';
+      document.getElementById('menu-create-view').style.display = 'none';
+      document.getElementById('menu-main-view').style.display = 'flex';
+    }
+
+    function closeModals() {
+      document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.remove('open'));
+    }
+    document.getElementById('btn-inv').onclick = () => {
+      closeModals();
+      document.getElementById('modal-inv').classList.add('open');
+      renderInventory();
+    };
+    document.getElementById('btn-craft').onclick = () => {
+      closeModals();
+      document.getElementById('modal-craft').classList.add('open');
+    };
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.innerText = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    /* =========================================================================
+       9. MAIN ANIMATION & RENDERING LOOP
+       ========================================================================= */
+    let lastTime = performance.now();
+
+    function gameLoop(now) {
+      requestAnimationFrame(gameLoop);
+      const dt = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
+
+      if (gameActive) {
+        updatePlayerPhysics(dt);
+        updateMiningState(dt);
+        world.updateChunksAround(player.pos.x, player.pos.z);
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    requestAnimationFrame(gameLoop);
+  </script>
+</body>
+</html>

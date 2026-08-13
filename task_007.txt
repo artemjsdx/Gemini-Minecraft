@@ -1,0 +1,8 @@
+TASK: 007 - Client-Server API & Three.js Integration Guide
+STATUS: IN_PROGRESS
+DESCRIPTION: Exhaustive API documentation for Three.js engine integration, events, network bridges, UI overlay.
+DEPENDENCIES: task_001.txt - task_006.txt
+TODO:
+- [x] Three.js Engine Lifecycle & Render Loop API
+- [x] React UI Bridge & Custom Hooks
+- [x] Network Client SDK & Event Emitter Specs

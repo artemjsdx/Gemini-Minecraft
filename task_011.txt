@@ -1,0 +1,15 @@
+TASK: 011 - Fix Controls, 16x16 Pixel Textures, AABB Collision Physics, Auto-Step & Chunk Streaming
+STATUS: COMPLETED
+DESCRIPTION: Fixed all 5 reported issues:
+1. Inverted controls: fixed non-inverted intuitive joystick/mouse/touch look with toggles in settings.
+2. Crisp 16x16 pixel-art texture atlas: procedural generator using NearestFilter with authentic Minecraft textures (dirt, grass top/side, stone, oak wood, leaves with alpha holes, sand, water, gold/iron/diamond ores, obsidian, brick, planks, glass, lava, torch).
+3. Infinite chunk streaming around player and solid safety bedrock floor to eliminate falling into the void.
+4. Heavy lag eliminated: single atlas batching, culled mesher with Lambert single draw call per chunk, 60 FPS smooth rendering.
+5. Solid Swept AABB voxel collision physics: separate X, Y, Z axis resolution, block bounding boxes, and auto-stepping up 1-block obstacles smoothly.
+DEPENDENCIES: task_010.txt
+TODO:
+- [x] Implement 16x16 pixel-art texture atlas generator with NearestFilter
+- [x] Implement Swept AABB axis-resolved player physics and auto-step
+- [x] Fix touch joystick and camera look directions
+- [x] Implement dynamic chunk loader around player with safety floor
+- [x] Verify compilation

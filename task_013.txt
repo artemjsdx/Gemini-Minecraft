@@ -1,0 +1,14 @@
+TASK: 013 - Landscape Screen Orientation, Freeze Fix & Minecraft D-Pad Controls
+STATUS: COMPLETED
+DESCRIPTION:
+1. Changed AndroidManifest screen orientation to sensorLandscape for full-screen widescreen gameplay.
+2. Eliminated device freeze/lag: decoupled chunk meshing with a frame-amortized queue and only checking chunk boundary crossings.
+3. Replaced circle joystick with classic Minecraft 4-way cross D-Pad (Up, Down, Left, Right) with a Sneak/Shift toggle button in the center.
+4. Positioned primary Jump button on the right side in authentic Minecraft Bedrock/PE style alongside mining, placement, and spell buttons.
+DEPENDENCIES: task_012.txt
+TODO:
+- [x] Set sensorLandscape in AndroidManifest.xml
+- [x] Fix freeze with asynchronous meshing queue & boundary detection
+- [x] Build Minecraft PE Cross D-Pad with central Shift
+- [x] Right-side Jump and action buttons
+- [x] Test and compile

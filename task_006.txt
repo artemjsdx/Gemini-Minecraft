@@ -1,0 +1,9 @@
+TASK: 006 - Gameplay Mechanics, Inventory, Mobs AI & RPG Skill Trees
+STATUS: IN_PROGRESS
+DESCRIPTION: Full gameplay systems: Slot-based Inventory, Crafting matrix, Mob Behavior Trees + Voxel 3D A*, RPG Skills.
+DEPENDENCIES: task_001.txt
+TODO:
+- [x] Inventory & NBT Item Stacking System
+- [x] 3x3 Shaped & Shapeless Crafting Engine
+- [x] Mob AI (Behavior Trees + Voxel A* Pathfinding)
+- [x] 6-Branch RPG Talent Tree & Leveling System

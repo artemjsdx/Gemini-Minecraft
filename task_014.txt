@@ -1,0 +1,13 @@
+TASK: 014 - Gemini Mine Full Game (Main Menu, World Creator, Crack Stages, Food/Hunger, 8 Chunks & GitHub Repo)
+STATUS: IN_PROGRESS
+DESCRIPTION:
+1. Main Menu with title screen, world list, world creation screen (World Name, Seed, Generator Type: Default/Amplified/Flat/Desert/Mountains, Game Mode).
+2. Advanced multi-biome procedural engine with 8-chunk render distance.
+3. Block hardness table + progressive crack overlay animation (10 destruction stages) on continuous hold-to-mine.
+4. Food items (Golden Apple, Red Apple, Bread, Steak) + Hunger Bar + Eating interaction & particle animation.
+5. GitHub repository creation & push with APK compilation.
+DEPENDENCIES: task_013.txt
+TODO:
+- [ ] Implement index.html with Main Menu, World Creator, Crack Animations, Hunger/Food, Multi-Biomes
+- [ ] Push to GitHub repo Gemini-Minecraft
+- [ ] Compile APK and verify

@@ -1,0 +1,8 @@
+TASK: 004 - Deferred Rendering, PBR Shaders, CSM & Post-Processing
+STATUS: IN_PROGRESS
+DESCRIPTION: Custom G-Buffer, Deferred Lighting pass, Cascaded Shadow Maps, SSAO, TAA, Volumetric Fog.
+DEPENDENCIES: task_003.txt
+TODO:
+- [x] G-Buffer MRT Architecture in WebGL2 / Three.js
+- [x] Deferred Lighting pass with tiled/clustered light culling
+- [x] Custom Voxel PBR Shaders + CSM + TAA + SSAO + Bloom
