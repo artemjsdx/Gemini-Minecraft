@@ -1,0 +1,7 @@
+TASK: 015 - Transfer APK to Android Device Storage
+STATUS: COMPLETED
+DESCRIPTION:
+1. Connected to ReplitTermux bridge (GET /ping verified ok).
+2. Downloaded Gemini-Mine.apk (22MB) directly to device internal storage at `/storage/emulated/0/Gemini-Mine.apk`.
+3. Verified file presence and permissions on device: `-rw-rw---- 1 root everyone 22M /storage/emulated/0/Gemini-Mine.apk`.
+DEPENDENCIES: task_014.txt
